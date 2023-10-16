@@ -28,7 +28,7 @@ Help()
   echo "  l NNN       - use RSA algorithm with key length or ED25519 if omitted"
   echo "  s pathname  - use unecrypted secret key and regenerate config and public"
   echo "  p           - ask secret key password instead of auto generation"
-  echo -e "\nuse KEYPAIR_CONFIG_PASS variable to pass password to the script"
+  echo -e "\nuse KEYPAIR_CONFIG_PASS variable to use config file password silently"
   echo -e "\n./$(basename ${0}) -d ~/Documents/keypairs -n github.com -c \"github.com / vladek@me.com\""
   echo "  generate the new keypair using ED25519 in directory ~/Documents/keypairs"
   echo -e "\n./$(basename ${0}) -d ~/Documents/keypairs -n gitlab.com -s ~/Documents/secrets/gitlab.com.key"
