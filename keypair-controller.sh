@@ -84,6 +84,7 @@ FILEpublic="${KEYpath}/${KEYname}.public"
 echo -e "\ntarget directory: ${KEYpath}"
 echo -n "  status        : "
 [[ -d "${KEYpath}" ]] || Help "WRONG"
+echo "ok"
 
 echo -en "\nkey pair     : "
 [[ "${KEYname}" == "" ]] && Help "DOES NOT DEFINED"
