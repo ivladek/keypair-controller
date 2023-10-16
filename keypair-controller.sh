@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # keypair-controller
-# v02.00 16.10.2023
+# v02.01 16.10.2023
 #   by Vladislav Kirilin
 #   @ivladek / ivladek@me.com
 #
@@ -18,23 +18,24 @@ Help()
 {
   # Display Help
   [[ "${1}" == "" ]] || echo "!!! ${1} !!!"
-  echo -e "\n\nKeypair controller - generate, add to agent, show information in secure manner"
+  echo -e "\n\nKey Pair Controller - generate, add to agent, show information in secure manner"
   echo "Syntax: ./$(basename ${0}) -d -n [[-c] [-l] | -s] [-p]"
   echo "options:"
   echo "  h           - print this Help"
   echo "  d path      - target path"
-  echo "  n name      - keypair name"
-  echo "  c \"comment\" - keypair decription"
+  echo "  n name      - key pair name"
+  echo "  c \"comment\" - key pair decription"
   echo "  l NNN       - use RSA algorithm with key length or ED25519 if omitted"
   echo "  s pathname  - use unecrypted secret key and regenerate config and public"
   echo "  p           - ask secret key password instead of auto generation"
   echo -e "\nuse KEYPAIR_CONFIG_PASS variable to use config file password silently"
   echo -e "\n./$(basename ${0}) -d ~/Documents/keypairs -n github.com -c \"github.com / vladek@me.com\""
-  echo "  generate the new keypair using ED25519 in directory ~/Documents/keypairs"
+  echo "  generate the new key pair using ED25519 in directory ~/Documents/keypairs"
   echo -e "\n./$(basename ${0}) -d ~/Documents/keypairs -n gitlab.com -s ~/Documents/secrets/gitlab.com.key"
   echo "  import unecrypted secret key, generate the new config and public key"
   echo -e "\n./$(basename ${0}) -d ~/Documents/keypairs -n git.corp.com -l 4096 -c \"corp git / vladek@corp.com\" -p"
-  echo "  generate the new keypair using RSA, ask for secret key file password"
+  echo "  generate the new key pair using RSA, ask for secret key file password"
+  echo -e "\nsecond run the same command just print information about key pair"
   echo
   exit
 }
@@ -83,11 +84,8 @@ FILEpublic="${KEYpath}/${KEYname}.public"
 echo -e "\ntarget directory: ${KEYpath}"
 echo -n "  status        : "
 [[ -d "${KEYpath}" ]] || Help "WRONG"
-chmod 700 "${KEYpath}"
-echo "ok"
-echo "  opened for write"
 
-echo -en "\nkeypair      : "
+echo -en "\nkey pair     : "
 [[ "${KEYname}" == "" ]] && Help "DOES NOT DEFINED"
 echo "${KEYname}"
 echo "  config file: ${FILEconfig}"
@@ -104,7 +102,7 @@ else
   echo "  read from variable: ${KEYPAIR_CONFIG_PASS}"
 fi
 
-echo -ne "\nkeypair data: reading from "
+echo -ne "\nkey pair data: reading from "
 unset KEYpwd
 if [[ "${FILEold}" != "" ]]
 then
@@ -140,22 +138,22 @@ then
 else
   echo "script parameters"
 fi
-echo "  type      : ${KEYtype}"
-echo "  length    : ${KEYlen}"
-echo "  comment   : \"${KEYcomment}\""
+echo "  type       : ${KEYtype}"
+echo "  length     : ${KEYlen}"
+echo "  comment    : \"${KEYcomment}\""
 if [[ "${KEYpwd}" == "" ]]
 then
   if [[ "${ASKpass}" == "no" ]]
   then
     KEYpwd=$(echo ${RANDOM}$(date)${RANDOM}$(ls -lR /tmp/)${RANDOM} | shasum | base64 | head -c 50)
-    echo "  password  : ${KEYpwd} (generated)"
+    echo "  password   : ${KEYpwd} (generated)"
   else
-    echo -n "  password ? "
+    echo -n "  password   ? "
     read KEYpwd
     export KEYpwd
   fi
 else
-  echo "  password  : ${KEYpwd} (read from config)"
+  echo "  password   : ${KEYpwd} (read from config)"
 fi
 
 if [[ ! -f "${FILEconfig}" ]]
@@ -167,11 +165,11 @@ then
     \"length\"     : ${KEYlen},
     \"password\"   : \"${KEYpwd}\"
   }" | openssl enc -aes-256-cbc -md sha512 -pbkdf2 -iter ${SKtrials} -salt -pass env:KEYPAIR_CONFIG_PASS | base64 -o "${FILEconfig}"
-  echo "  unload keypair from keychain"
+  echo "  unload key pair from keychain"
   ssh-add -q --apple-use-keychain -d "${FILEsecret}" &> /dev/null
   if [[ "${FILEold}" == "" ]]
   then
-    echo "  deleting keypair files"
+    echo "  deleting key pair files"
     rm -f "${FILEsecret}"
     rm -f "${FILEpublic}"
   fi
@@ -179,7 +177,7 @@ fi
 
 if [[ ! -f "${FILEsecret}" ]]
 then
-  echo -en "\nkeypair generation ... "
+  echo -en "\nkey pair generation ... "
   ssh-keygen -q -t ${KEYtype} -b ${KEYlen} -C "${KEYcomment}" -P "${KEYpwd}" -a ${AKtrials} -f "${FILEsecret}" &>/dev/null
   [[ $? == 0 ]] || Help "ERROR"
   mv "${FILEsecret}.pub" "${FILEpublic}"
@@ -235,6 +233,5 @@ echo -e "\nrestrict access rights back to read only"
 chmod 400 "${FILEconfig}"
 chmod 400 "${FILEsecret}"
 chmod 400 "${FILEpublic}"
-chmod 500 "${KEYpath}"
 
 echo -e "\n\ndone."
